@@ -1,17 +1,28 @@
+mod event;
+
+
 mod player;
 use player::PlayerPlugin;
 
+mod enemy;
+use enemy::EnemyPlugin;
+
+mod utils;
+pub use utils::{ velocity, marks };
+use utils::velocity::MovePlugin;
+
 
 mod components;
-pub use components::{ Velocity, SpriteSize };
+pub use components::{ SpriteSize };
 
 mod camera;
-pub use camera::CameraPlugin;
+use camera::CameraPlugin;
 
 mod assets;
-pub use assets::PlayerImageAssets;
+pub use assets::{ PlayerImageAssets, BackgroundImageAssets, BulletImageAssets, EnemyImageAssets};
 
-
+mod background;
+use background::BackgroundPlugin;
 
 
 
@@ -38,6 +49,9 @@ impl Plugin for GamePlugin {
             LoadingState::new(GameStage::Loading)
             .continue_to_state(GameStage::Main)
             .with_collection::<PlayerImageAssets>()
+            .with_collection::<BackgroundImageAssets>()
+            .with_collection::<BulletImageAssets>()
+            .with_collection::<EnemyImageAssets>()
         )
         .add_state(GameStage::Loading)
         .add_plugins(DefaultPlugins
@@ -49,8 +63,11 @@ impl Plugin for GamePlugin {
                 ..Default::default()
             })
         )
+        .add_plugin(BackgroundPlugin)
         .add_plugin(PlayerPlugin)
-        .add_plugin(CameraPlugin);
+        .add_plugin(EnemyPlugin)
+        .add_plugin(CameraPlugin)
+        .add_plugin(MovePlugin);
     }
 }
 
