@@ -3,7 +3,8 @@ use rand::{thread_rng, Rng};
 
 use crate::{EnemyImageAssets, SpriteSize,
             components::Enemy, 
-            background::{X_DIRECTION_LIMIT, Y_DIRECTION_LIMIT}
+            background::{X_DIRECTION_LIMIT, Y_DIRECTION_LIMIT}, 
+            velocity::Velocity
         };
 
 pub struct EnemyPlugin;
@@ -20,7 +21,7 @@ impl Plugin for EnemyPlugin {
 
 
 #[derive(Resource)]
-struct EnemyCount(u32);
+pub struct EnemyCount(pub u32);
 impl Default for EnemyCount {
     fn default() -> Self {
         Self(0)
@@ -29,7 +30,7 @@ impl Default for EnemyCount {
 
 
 const ENEMY_MAX: u32 = 6;
-const ENEMY_SIZE: (f32, f32) = (60.0, 60.0);
+pub const ENEMY_SIZE: (f32, f32) = (60.0, 60.0);
 
 fn enemy_spawn_system(
     mut commands: Commands,
@@ -40,8 +41,8 @@ fn enemy_spawn_system(
 
         let mut rng = thread_rng();
 
-        let x = rng.gen_range( -(X_DIRECTION_LIMIT - ENEMY_SIZE.0 / 20.0)..(X_DIRECTION_LIMIT - ENEMY_SIZE.0 / 20.0) );
-        let y = rng.gen_range( -(Y_DIRECTION_LIMIT - ENEMY_SIZE.1 / 20.0)..(Y_DIRECTION_LIMIT - ENEMY_SIZE.1 / 20.0));
+        let x = rng.gen_range( -(X_DIRECTION_LIMIT - ENEMY_SIZE.0 / 2.0)..(X_DIRECTION_LIMIT - ENEMY_SIZE.0 / 2.0) );
+        let y = rng.gen_range( -(Y_DIRECTION_LIMIT - ENEMY_SIZE.1 / 2.0)..(Y_DIRECTION_LIMIT - ENEMY_SIZE.1 / 2.0));
 
         commands.spawn(
             SpriteBundle {
@@ -58,6 +59,7 @@ fn enemy_spawn_system(
             }       
         )
         .insert(Enemy)
+        .insert(Velocity::default())
         .insert(SpriteSize::from(ENEMY_SIZE));
 
         enemy_count.0 += 1;

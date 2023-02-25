@@ -1,8 +1,8 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::collide_aabb::collide, math::Vec3Swizzles};
 
 use crate::{GameStage, 
-            event::PlayerMoveEvent, 
-            components::{ Player, Bullet }, 
+            events::PlayerMoveEvent, 
+            components::{ Player, Bullet, Enemy }, 
             background::{X_DIRECTION_LIMIT, Y_DIRECTION_LIMIT}, 
             SpriteSize,
             };
@@ -28,6 +28,7 @@ impl Plugin for MovePlugin {
             SystemSet::on_update(GameStage::Main)
             .with_system(player_move_system)
             .with_system(bullet_move_system)
+            .with_system(enemy_move_system)
         );
     }
 }
@@ -35,24 +36,6 @@ impl Plugin for MovePlugin {
 const TIME_STEP: f32 = 1.0 / 60.0;
 const BASE_SPEED: f32 = 100.0;
 
-
-// fn move_system(
-//     mut query: Query<(&mut Transform, &RoleType, &Velocity)>,
-//     mut player_move_event: EventWriter<PlayerMoveEvent>,
-// ){
-//     for(mut transform, role_type,velocity) in query.iter_mut(){
-//         let translation = &mut transform.translation;
-//         translation.x += velocity.x * TIME_STEP * BASE_SPEED;
-//         translation.y += velocity.y * TIME_STEP * BASE_SPEED;
-    
-//         match role_type {
-//             RoleType::Player => {
-//                 player_move_event.send(PlayerMoveEvent((translation.x, translation.y)));
-//             },
-//             _ => ()
-//         }
-//     }
-// }
 
 fn player_move_system(
     mut query: Query<(&mut Transform, &Velocity, &SpriteSize), With<Player>>,
@@ -105,5 +88,36 @@ fn bullet_move_system(
         }
 
 
+    }
+}
+
+fn enemy_move_system (
+    mut enemy_query: Query<(&mut Transform , &SpriteSize), With<Enemy>>,
+    player_query: Query<(&Transform, &SpriteSize), (With<Player>, Without<Enemy>)>,
+) {
+    if let Ok((player_tf, player_size)) = player_query.get_single() {
+        let player_scale = Vec2::from(player_tf.scale.xy());
+        for (mut enemy_tf, enemy_size) in enemy_query.iter_mut() {
+            let enemy_scale = Vec2::from(enemy_tf.scale.xy());
+            let x_direcion = player_tf.translation.x - enemy_tf.translation.x;
+            let y_direcion = player_tf.translation.y - enemy_tf.translation.y;
+
+            let bevel = (x_direcion * x_direcion + y_direcion * y_direcion).sqrt();
+
+            let collison = collide(
+                player_tf.translation,
+                player_size.0 * player_scale,
+                enemy_tf.translation,
+                enemy_size.0 * enemy_scale,
+            );
+
+            if let Some(_) = collison {
+
+            } else {
+                enemy_tf.translation.x +=  x_direcion / bevel * TIME_STEP * BASE_SPEED;
+                enemy_tf.translation.y +=  y_direcion / bevel * TIME_STEP * BASE_SPEED;
+            }
+
+        }
     }
 }

@@ -22,5 +22,14 @@ pub struct BulletImageAssets {
 #[derive(AssetCollection, Resource)]
 pub struct EnemyImageAssets {
     #[asset(path = "textures/enemy0.png")]
-    pub enemy0: Handle<Image>
+    pub enemy0: Handle<Image>,
+
+    #[asset(path = "textures/tomb.png")]
+    pub tomb: Handle<Image>,    
+}
+
+#[derive(AssetCollection, Resource)]
+pub struct UIImageAssets {
+    #[asset(path = "textures/ui/main_panel.png")]
+    pub main_panel: Handle<Image>
 }

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::{GameStage, 
-            event::PlayerMoveEvent, 
+            events::PlayerMoveEvent, 
             };
 
 pub struct CameraPlugin;

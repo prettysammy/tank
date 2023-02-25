@@ -1,5 +1,8 @@
-mod event;
+mod events;
+use events::EventsPlugin;
 
+mod render;
+use render::RenderPlugin;
 
 mod player;
 use player::PlayerPlugin;
@@ -19,22 +22,25 @@ mod camera;
 use camera::CameraPlugin;
 
 mod assets;
-pub use assets::{ PlayerImageAssets, BackgroundImageAssets, BulletImageAssets, EnemyImageAssets};
+pub use assets::{ PlayerImageAssets, BackgroundImageAssets, BulletImageAssets, EnemyImageAssets, UIImageAssets};
 
 mod background;
 use background::BackgroundPlugin;
 
-
+mod panel;
+use panel::PanelPlugin;
 
 
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
+use bevy::utils::HashMap;
+use bevy_ninepatch::NinePatchPlugin;
 
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 
-pub struct GamePlugin;
+
 
 #[derive(Clone, PartialEq, Hash, Eq, Debug)]
 pub enum GameStage {
@@ -43,6 +49,11 @@ pub enum GameStage {
     GameOver,
 }
 
+#[derive(Default, Resource)]
+pub struct EelEntityMap(pub HashMap<u64, Entity>);
+
+
+pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_loading_state(
@@ -52,22 +63,29 @@ impl Plugin for GamePlugin {
             .with_collection::<BackgroundImageAssets>()
             .with_collection::<BulletImageAssets>()
             .with_collection::<EnemyImageAssets>()
+            .with_collection::<UIImageAssets>()
         )
         .add_state(GameStage::Loading)
         .add_plugins(DefaultPlugins
             .set(WindowPlugin{
                 window: WindowDescriptor {
                     title: "Tank".to_string(),
+                    width: 1280.,
+                    height: 800.,
                     ..Default::default()
                 },
                 ..Default::default()
             })
         )
+        .add_plugin(NinePatchPlugin::<()>::default())
         .add_plugin(BackgroundPlugin)
         .add_plugin(PlayerPlugin)
         .add_plugin(EnemyPlugin)
         .add_plugin(CameraPlugin)
-        .add_plugin(MovePlugin);
+        .add_plugin(MovePlugin)
+        .add_plugin(EventsPlugin)
+        .add_plugin(RenderPlugin)
+        .add_plugin(PanelPlugin);
     }
 }
 

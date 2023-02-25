@@ -1,5 +1,4 @@
 use bevy::{prelude::*, ecs::schedule::ShouldRun};
-use rand::{thread_rng, Rng};
 
 use crate::{ SpriteSize, PlayerImageAssets, GameStage, BulletImageAssets,
             marks::RoleType,
@@ -53,16 +52,32 @@ fn setup(
     .insert(Player)
     .insert(RoleType::Player)
     .insert(Velocity::default())
-    .insert(SpriteSize::from(PLAYER_SIZE));
-
+    .insert(SpriteSize::from(PLAYER_SIZE))
+    .insert(PlayerFireTimer::default());
 }
 
-fn player_fire_criteria() ->ShouldRun {
-    if thread_rng().gen_bool(1.0 / 60.0) {
-        ShouldRun::Yes
-    } else {
-        ShouldRun::No
+#[derive(Component)]
+struct PlayerFireTimer(Timer);
+impl Default for PlayerFireTimer {
+    fn default() -> Self {
+        Self(Timer::from_seconds(0.1, TimerMode::Repeating))
     }
+}
+
+
+
+fn player_fire_criteria(
+    mut query: Query<&mut PlayerFireTimer>,
+    time: Res<Time>,
+) -> ShouldRun {
+    for mut player_fire_timer in query.iter_mut(){
+        if player_fire_timer.0.tick(time.delta()).just_finished(){
+            return ShouldRun::Yes;
+        } else {
+            return ShouldRun::No;
+        }
+    }
+    return ShouldRun::No;
 }
 
 

@@ -3,8 +3,8 @@ use bevy::{prelude::*, sprite::Anchor};
 use crate::{ BackgroundImageAssets, GameStage };
 
 
-const TILE_NUM_EVERY_X_REGION: u32 = 4;
-const TILE_NUM_EVERY_Y_REGION: u32 = 3;
+const TILE_NUM_EVERY_X_REGION: u32 = 3;
+const TILE_NUM_EVERY_Y_REGION: u32 = 2;
 const TILE_SIZE: f32 = 256.0;
 const START_POS: (f32, f32) = (- ((TILE_SIZE as u32* TILE_NUM_EVERY_X_REGION) as f32), (TILE_SIZE as u32 * TILE_NUM_EVERY_Y_REGION) as f32);
 
