@@ -8,10 +8,12 @@ pub struct CameraPlugin;
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(
-            SystemSet::on_enter(GameStage::Main).with_system(setup)
+            SystemSet::on_enter(GameStage::Main)
+            .with_system(setup)
         )
         .add_system_set(
-            SystemSet::on_update(GameStage::Main).with_system(camera_with_player_view_system)
+            SystemSet::on_update(GameStage::Main)
+            .with_system(camera_with_player_view_system)
         );        
     }
 }

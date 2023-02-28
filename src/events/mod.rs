@@ -9,12 +9,21 @@ use self::battle::BattlePlugin;
 pub struct PlayerMoveEvent(pub (f32, f32));
 
 //position (x,y)
-pub struct PlayerHitEnemyEvent(pub (f32, f32));
+pub struct PlayerHitEnemyEvent(pub Entity);
+
+//enemy_atk
+pub struct EnemyHitPlayerEvent(pub i64);
+
+pub struct GameOverEvent;
 
 pub struct EventsPlugin;
 impl Plugin for EventsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<PlayerHitEnemyEvent>();
-        app.add_plugin(BattlePlugin);
+        app
+        .add_event::<PlayerMoveEvent>()
+        .add_event::<PlayerHitEnemyEvent>()
+        .add_event::<EnemyHitPlayerEvent>()
+        .add_event::<GameOverEvent>()
+        .add_plugin(BattlePlugin);
     }
 }

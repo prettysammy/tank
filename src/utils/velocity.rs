@@ -1,10 +1,13 @@
+use std::collections::HashSet;
+
 use bevy::{prelude::*, sprite::collide_aabb::collide, math::Vec3Swizzles};
 
 use crate::{GameStage, 
-            events::PlayerMoveEvent, 
+            events::{PlayerMoveEvent, EnemyHitPlayerEvent, PlayerHitEnemyEvent}, 
             components::{ Player, Bullet, Enemy }, 
             background::{X_DIRECTION_LIMIT, Y_DIRECTION_LIMIT}, 
-            SpriteSize,
+            enemy::{EnemyStatus, EnemyAttackTimer},
+            SpriteSize, 
             };
 
 #[derive(Component)]
@@ -22,7 +25,7 @@ impl Default for Velocity {
 pub struct MovePlugin;
 impl Plugin for MovePlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<PlayerMoveEvent>();
+        //app.add_event::<PlayerMoveEvent>();
         
         app.add_system_set(
             SystemSet::on_update(GameStage::Main)
@@ -70,34 +73,67 @@ fn player_move_system(
 
 fn bullet_move_system(
     mut commands: Commands,
-    mut query: Query<(Entity, &mut Transform, &Velocity, &SpriteSize), With<Bullet>>,
+    mut bullet_query: Query<(Entity, &mut Transform, &Velocity, &SpriteSize), With<Bullet>>,
+    mut enemy_query: Query<(Entity, &Transform, &SpriteSize), (With<Enemy>, Without<Bullet>)>,
+    mut play_hit_enemy_event: EventWriter<PlayerHitEnemyEvent>
 ){
-    for(entity, mut transform, velocity, bullet_size) in query.iter_mut(){
-        let translation = &mut transform.translation;
-        let bullet_size = bullet_size.0 / 2.0;
+    let mut despawned_entities: HashSet<Entity> = HashSet::new();
+    
+    for(bullet_entity, mut bullet_tf, velocity, bullet_size) in bullet_query.iter_mut(){
+        if despawned_entities.contains(&bullet_entity) {
+            continue;
+        }        
+                
+        let bullet_scale = Vec2::from(bullet_tf.scale.xy());
+        for(enemy_entity, enemy_tf, enemy_size) in enemy_query.iter_mut(){
+            if despawned_entities.contains(&bullet_entity) {
+                continue;
+            }  
 
-        if translation.x + velocity.x * TIME_STEP * BASE_SPEED + bullet_size.x >= X_DIRECTION_LIMIT 
-            || translation.x + velocity.x * TIME_STEP * BASE_SPEED - bullet_size.x < -X_DIRECTION_LIMIT
-            || translation.y + velocity.y * TIME_STEP * BASE_SPEED + bullet_size.y > Y_DIRECTION_LIMIT 
-            || translation.y + velocity.y * TIME_STEP * BASE_SPEED - bullet_size.y < -Y_DIRECTION_LIMIT 
-        {
-            commands.entity(entity).despawn();
-        } else {
-            translation.x += velocity.x * TIME_STEP * BASE_SPEED;
-            translation.y += velocity.y * TIME_STEP * BASE_SPEED;
+            let enemy_scale = Vec2::from(enemy_tf.scale.xy());
+
+            let collison = collide(
+                bullet_tf.translation,
+                bullet_size.0 * bullet_scale,
+                enemy_tf.translation,
+                enemy_size.0 * enemy_scale,
+            );
+
+            if let Some(_) = collison {
+                despawned_entities.insert(bullet_entity);
+                commands.entity(bullet_entity).despawn();
+                play_hit_enemy_event.send(PlayerHitEnemyEvent(enemy_entity));                
+            } else {
+                let translation = &mut bullet_tf.translation;
+                let bullet_size = bullet_size.0 / 2.0;
+
+                if translation.x + velocity.x * TIME_STEP * BASE_SPEED + bullet_size.x >= X_DIRECTION_LIMIT 
+                    || translation.x + velocity.x * TIME_STEP * BASE_SPEED - bullet_size.x < -X_DIRECTION_LIMIT
+                    || translation.y + velocity.y * TIME_STEP * BASE_SPEED + bullet_size.y > Y_DIRECTION_LIMIT 
+                    || translation.y + velocity.y * TIME_STEP * BASE_SPEED - bullet_size.y < -Y_DIRECTION_LIMIT 
+                {
+                    despawned_entities.insert(bullet_entity);
+                    commands.entity(bullet_entity).despawn();
+                } else {
+                    translation.x += velocity.x * TIME_STEP * BASE_SPEED;
+                    translation.y += velocity.y * TIME_STEP * BASE_SPEED;
+                }                
+            }            
+       
         }
-
 
     }
 }
 
 fn enemy_move_system (
-    mut enemy_query: Query<(&mut Transform , &SpriteSize), With<Enemy>>,
+    mut enemy_query: Query<(&mut Transform, &mut EnemyAttackTimer, &EnemyStatus, &SpriteSize), With<Enemy>>,
     player_query: Query<(&Transform, &SpriteSize), (With<Player>, Without<Enemy>)>,
+    mut enemy_hit_player_event: EventWriter<EnemyHitPlayerEvent>,
+    time: Res<Time>
 ) {
     if let Ok((player_tf, player_size)) = player_query.get_single() {
         let player_scale = Vec2::from(player_tf.scale.xy());
-        for (mut enemy_tf, enemy_size) in enemy_query.iter_mut() {
+        for (mut enemy_tf, mut enemy_attcak_timer, enemy_status, enemy_size) in enemy_query.iter_mut() {
             let enemy_scale = Vec2::from(enemy_tf.scale.xy());
             let x_direcion = player_tf.translation.x - enemy_tf.translation.x;
             let y_direcion = player_tf.translation.y - enemy_tf.translation.y;
@@ -111,11 +147,15 @@ fn enemy_move_system (
                 enemy_size.0 * enemy_scale,
             );
 
-            if let Some(_) = collison {
+            if let Some(_) = collison {               
+                if enemy_attcak_timer.0.tick(time.delta()).just_finished() {
+                    enemy_hit_player_event.send(EnemyHitPlayerEvent(enemy_status.atk))
+                }                
+
 
             } else {
-                enemy_tf.translation.x +=  x_direcion / bevel * TIME_STEP * BASE_SPEED;
-                enemy_tf.translation.y +=  y_direcion / bevel * TIME_STEP * BASE_SPEED;
+                enemy_tf.translation.x +=  x_direcion / bevel * TIME_STEP * BASE_SPEED * 0.3;
+                enemy_tf.translation.y +=  y_direcion / bevel * TIME_STEP * BASE_SPEED * 0.3;
             }
 
         }

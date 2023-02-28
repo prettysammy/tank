@@ -1,11 +1,10 @@
-use bevy::{prelude::*, math::Vec3Swizzles, sprite::collide_aabb::collide, utils::HashSet};
+use bevy::{prelude::*, math::Vec3Swizzles, sprite::collide_aabb::collide};
 
-use crate::{SpriteSize,  GameStage, 
-            components::{Bullet, Enemy}, 
-            enemy::EnemyCount
+use crate::{GameStage,
+            player::PlayerStatus, 
            };
 
-use super::PlayerHitEnemyEvent;
+use super::{EnemyHitPlayerEvent, GameOverEvent};
 
 
 pub struct BattlePlugin;
@@ -13,53 +12,28 @@ impl Plugin for BattlePlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(
             SystemSet::on_update(GameStage::Main)
-            .with_system(player_bullet_hit_enemy_system)
+            .with_system(enemy_hit_player_system)
         );
     }
 }
 
-fn player_bullet_hit_enemy_system(
-    mut commands: Commands,
-    bullet_query: Query<(Entity, &Transform, &SpriteSize), With<Bullet>>,
-    enemy_query: Query<(Entity, &Transform, &SpriteSize), With<Enemy>>,
-    mut enemy_count: ResMut<EnemyCount>,
-    mut play_hit_enemy_event: EventWriter<PlayerHitEnemyEvent> 
+fn enemy_hit_player_system (
+    mut player_status: ResMut<PlayerStatus>,
+    mut enemy_hit_player_event: EventReader<EnemyHitPlayerEvent>,
+    mut game_over_event: EventWriter<GameOverEvent>
 ) {
-    
-    let mut despawned_entities: HashSet<Entity> = HashSet::new();
+    for EnemyHitPlayerEvent(enemy_atk) in enemy_hit_player_event.iter() {
+        player_status.cur_hp -= (*enemy_atk - player_status.def).max(0);
 
-    for (bullet_entity, bullet_tf, bullet_size) in bullet_query.iter() {
-        if despawned_entities.contains(&bullet_entity) {
-            continue;
-        }
-        let bullet_scale = Vec2::from(bullet_tf.scale.xy());
-
-        for(enemy_entity, enemy_tf, enemy_size) in enemy_query.iter(){
-            if despawned_entities.contains(&enemy_entity) {
-                continue;
-            }
-            let enemy_scale = Vec2::from(enemy_tf.scale.xy());
-
-            let collison = collide(
-                bullet_tf.translation,
-                bullet_size.0 * bullet_scale,
-                enemy_tf.translation,
-                enemy_size.0 * enemy_scale,
-            );
-
-            if let Some(_) = collison {
-                despawned_entities.insert(bullet_entity);
-                despawned_entities.insert(enemy_entity);
-
-                //println!("send hit {:?},{:?}", bullet_entity, enemy_entity);
-                //commands.entity(bullet_entity).despawn();
-                commands.entity(enemy_entity).despawn();
-
-                enemy_count.0 -= 1;
-
-                play_hit_enemy_event.send(PlayerHitEnemyEvent((enemy_tf.translation.x, enemy_tf.translation.y)));
-            }
-        
+        if player_status.cur_hp <= 0 {
+            //  match player_status.alive {
+            //     crate::player::AliveStatus::ALIVE => {
+            //         player_status.alive = crate::player::AliveStatus::DIE;
+            //         game_over_event.send(GameOverEvent);
+            //     },
+            //     crate::player::AliveStatus::DIE => {},
+            // };
+            game_over_event.send(GameOverEvent);
         }
     }
 }

@@ -1,40 +1,19 @@
-use bevy::{prelude::*, ecs::schedule::ShouldRun};
+use bevy::{prelude::*};
 
-use crate::{ SpriteSize, PlayerImageAssets, GameStage, BulletImageAssets,
-            marks::RoleType,
+use crate::{ SpriteSize, PlayerImageAssets,BulletImageAssets,
             velocity::Velocity,             
             components::{ Player, Bullet},  
             };
 
-pub struct PlayerPlugin;
-
-impl Plugin for PlayerPlugin {
-    fn build(&self, app: &mut App) {       
-        app.add_system_set(
-            SystemSet::on_enter(GameStage::Main).with_system(setup)
-        )
-        .add_system_set(
-            SystemSet::on_update(GameStage::Main)
-            .with_system(player_keyboard_event_system)
-        )
-        .add_system_set(
-            SystemSet::new()
-                .with_run_criteria(player_fire_criteria)
-                .with_system(player_fire_system)
-        )        
-        ;
-    }
-}
+use super::{PlayerStatus, PlayerStatusType, PLAYER_SIZE, BULLET_SIZE, PLAY_BULLET_SPEED, PlayerFireTimer};
 
 
-const PLAYER_SIZE: (f32, f32) = (60.0, 60.0); 
-const BULLET_SIZE:  (f32, f32) = (16.0, 16.0); 
-const PLAY_BULLET_SPEED: f32 = 2.0;
-
-fn setup(
+pub(crate) fn setup(
     mut commands: Commands,
     player_image_assets: Res<PlayerImageAssets>
 ) {
+    commands.insert_resource(PlayerStatus::default());
+
     commands.spawn(
         SpriteBundle{
             texture: player_image_assets.tank0.clone(),
@@ -50,39 +29,13 @@ fn setup(
         }       
     )
     .insert(Player)
-    .insert(RoleType::Player)
     .insert(Velocity::default())
     .insert(SpriteSize::from(PLAYER_SIZE))
     .insert(PlayerFireTimer::default());
 }
 
-#[derive(Component)]
-struct PlayerFireTimer(Timer);
-impl Default for PlayerFireTimer {
-    fn default() -> Self {
-        Self(Timer::from_seconds(0.1, TimerMode::Repeating))
-    }
-}
 
-
-
-fn player_fire_criteria(
-    mut query: Query<&mut PlayerFireTimer>,
-    time: Res<Time>,
-) -> ShouldRun {
-    for mut player_fire_timer in query.iter_mut(){
-        if player_fire_timer.0.tick(time.delta()).just_finished(){
-            return ShouldRun::Yes;
-        } else {
-            return ShouldRun::No;
-        }
-    }
-    return ShouldRun::No;
-}
-
-
-
-fn player_fire_system(
+pub(crate) fn player_fire_system(
     mut commands: Commands,
     bullet_image_assets: Res<BulletImageAssets>,
     query: Query<(&Transform, &Velocity), With<Player>>
@@ -121,14 +74,28 @@ fn player_fire_system(
         };
 
         spawn_bullet();
-
-    }
- 
+    } 
 }
 
 
+pub(crate) fn update_player_status_system(
+    player_status: Res<PlayerStatus>,
+    mut query_text: Query<(&mut Text, &PlayerStatusType)>
+) {
+    if player_status.is_changed() {
+        for (mut text, status_type) in query_text.iter_mut() {
+            text.sections[0].value =match status_type {
+                PlayerStatusType::ATK => format!("{}", player_status.atk),
+                PlayerStatusType::DEF => format!("{}", player_status.def),
+                PlayerStatusType::HP => format!("{}/{}", player_status.cur_hp, player_status.max_hp),
+                PlayerStatusType::GOLD => format!("{}", player_status.gold),
+            };
+        }
+    }
+}
 
-fn player_keyboard_event_system(
+
+pub(crate) fn player_keyboard_event_system(
     kb: Res<Input<KeyCode>>,
     mut query: Query<&mut Velocity, With<Player>>
 ) {

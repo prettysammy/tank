@@ -11,7 +11,7 @@ mod enemy;
 use enemy::EnemyPlugin;
 
 mod utils;
-pub use utils::{ velocity, marks };
+pub use utils::{ velocity};
 use utils::velocity::MovePlugin;
 
 
@@ -22,17 +22,19 @@ mod camera;
 use camera::CameraPlugin;
 
 mod assets;
-pub use assets::{ PlayerImageAssets, BackgroundImageAssets, BulletImageAssets, EnemyImageAssets, UIImageAssets};
+pub use assets::{ PlayerImageAssets, BackgroundImageAssets, BulletImageAssets, EnemyImageAssets, UIImageAssets, FontAssets};
 
 mod background;
 use background::BackgroundPlugin;
 
-mod panel;
-use panel::PanelPlugin;
+mod ui;
+use ui::UiPlugin;
+
+mod game_stage;
+pub use game_stage::{GameStage, GameStagePlugin};
 
 
 use bevy::prelude::*;
-use bevy_asset_loader::prelude::*;
 use bevy::utils::HashMap;
 use bevy_ninepatch::NinePatchPlugin;
 
@@ -41,14 +43,6 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 
 
-
-#[derive(Clone, PartialEq, Hash, Eq, Debug)]
-pub enum GameStage {
-    Loading,
-    Main,
-    GameOver,
-}
-
 #[derive(Default, Resource)]
 pub struct EelEntityMap(pub HashMap<u64, Entity>);
 
@@ -56,16 +50,9 @@ pub struct EelEntityMap(pub HashMap<u64, Entity>);
 pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_loading_state(
-            LoadingState::new(GameStage::Loading)
-            .continue_to_state(GameStage::Main)
-            .with_collection::<PlayerImageAssets>()
-            .with_collection::<BackgroundImageAssets>()
-            .with_collection::<BulletImageAssets>()
-            .with_collection::<EnemyImageAssets>()
-            .with_collection::<UIImageAssets>()
-        )
-        .add_state(GameStage::Loading)
+        app
+        .add_plugin(GameStagePlugin)
+
         .add_plugins(DefaultPlugins
             .set(WindowPlugin{
                 window: WindowDescriptor {
@@ -77,6 +64,7 @@ impl Plugin for GamePlugin {
                 ..Default::default()
             })
         )
+        .insert_resource(ClearColor(Color::rgb(0.04, 0.04, 0.04)))
         .add_plugin(NinePatchPlugin::<()>::default())
         .add_plugin(BackgroundPlugin)
         .add_plugin(PlayerPlugin)
@@ -85,7 +73,7 @@ impl Plugin for GamePlugin {
         .add_plugin(MovePlugin)
         .add_plugin(EventsPlugin)
         .add_plugin(RenderPlugin)
-        .add_plugin(PanelPlugin);
+        .add_plugin(UiPlugin);
     }
 }
 
