@@ -11,17 +11,17 @@ impl Plugin for BattleRenderPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(
             SystemSet::on_update(GameStage::Main)
-            .with_system(render_player_hit_enemy)
+            .with_system(render_bullet_hit_enemy)
             .with_system(despawn_enemy_tomb_system)
         );
     }
 }
 
-fn render_player_hit_enemy(
+fn render_bullet_hit_enemy(
     mut commands: Commands,
     mut query: Query<&mut EnemyStatus, &Transform>,
     mut player_hit_enemy_event: EventReader<PlayerHitEnemyEvent>,
-    player_status: Res<PlayerStatus>,
+    mut player_status: ResMut<PlayerStatus>,
     mut enemy_count: ResMut<EnemyCount>,
     enemy_image_assets: Res<EnemyImageAssets>
 ) {
@@ -32,6 +32,8 @@ fn render_player_hit_enemy(
             //println!("enemy {:?} hp is {}", enemy_entity, enemy_status.cur_hp);
             if enemy_status.cur_hp <= 0 {
                 
+                player_status.gold += enemy_status.gold.to_i64();
+
                 if let Ok(enemy_tf) = query.get_component::<Transform>(*enemy_entity) {
                     //println!("should despawn enemy {:?}", enemy_entity);
                     commands.entity(*enemy_entity).despawn_recursive();

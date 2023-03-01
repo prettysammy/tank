@@ -4,13 +4,7 @@ use crate::GameStage;
 use bevy::prelude::*;
 use self::player::*;
 
-const PLAYER_SIZE: (f32, f32) = (60.0, 60.0); 
-
-#[derive(PartialEq, Eq)]
-pub enum AliveStatus {
-    ALIVE,
-    DIE,
-}
+const PLAYER_SIZE: (f32, f32) = (50.0, 60.0); 
 
 #[derive(Resource)]
 pub struct PlayerStatus {
@@ -19,7 +13,6 @@ pub struct PlayerStatus {
     pub cur_hp: i64,
     pub max_hp: i64,
     pub gold: i64,
-    pub alive: AliveStatus,
 }
 
 impl Default for PlayerStatus {
@@ -30,7 +23,6 @@ impl Default for PlayerStatus {
             cur_hp: 100,
             max_hp: 100,
             gold: 10,
-            alive: AliveStatus::ALIVE, 
         }
     }
 }

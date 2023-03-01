@@ -26,13 +26,6 @@ fn enemy_hit_player_system (
         player_status.cur_hp -= (*enemy_atk - player_status.def).max(0);
 
         if player_status.cur_hp <= 0 {
-            //  match player_status.alive {
-            //     crate::player::AliveStatus::ALIVE => {
-            //         player_status.alive = crate::player::AliveStatus::DIE;
-            //         game_over_event.send(GameOverEvent);
-            //     },
-            //     crate::player::AliveStatus::DIE => {},
-            // };
             game_over_event.send(GameOverEvent);
         }
     }

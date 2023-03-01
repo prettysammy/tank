@@ -25,7 +25,7 @@ use ui::UiPlugin;
 
 
 //pub functions
-//mod utils;
+mod utils;
 
 
 mod components;

@@ -1,13 +1,13 @@
-use bevy::{prelude::*, sprite::collide_aabb::collide, math::Vec3Swizzles};
+use bevy::{prelude::*, sprite::collide_aabb::collide, math::Vec3Swizzles, render::render_resource::Texture};
 use rand::{thread_rng, Rng};
 
 use crate::{EnemyImageAssets, SpriteSize, FontAssets, TIME_STEP, BASE_SPEED,
             components::{Enemy, Player}, 
             background::{X_DIRECTION_LIMIT, Y_DIRECTION_LIMIT},
-            events::EnemyHitPlayerEvent, 
+            events::EnemyHitPlayerEvent, utils::cal_vector_by_two_points, 
         };
 
-use super::{EnemyCount, ENEMY_MAX, ENEMY_SIZE, EnemyStatus, EnemyAttackTimer, EnemyHpBar, EnemySpawnTimer};
+use super::{EnemyCount, ENEMY_MAX, ENEMY_SIZE, EnemyStatus, EnemyAttackTimer, EnemyHpBar, EnemySpawnTimer, ENEMY_SPEED};
 
 pub(crate) fn init_main_system(
     mut commands: Commands,
@@ -62,7 +62,7 @@ pub(crate) fn enemy_spawn_system(
 
         commands.spawn(
             SpriteSheetBundle {
-                texture_atlas: enemy_image_assets.enemy1.clone_weak(),
+                texture_atlas: enemy_image_assets.zombie.clone_weak(),
                 transform: Transform{
                     translation:Vec3::new(x, y, 10.0),
                     ..Default::default()
@@ -74,7 +74,7 @@ pub(crate) fn enemy_spawn_system(
                 ..Default::default()
             }       
         );
-
+                
         entity_command
         .insert(Enemy)
         .insert(SpriteSize::from(ENEMY_SIZE))
@@ -121,10 +121,7 @@ pub(crate) fn enemy_spawn_system(
                 })
                 .insert(EnemyHpBar(entity));
             }); 
-
-
-
-   
+  
         enemy_count.0 += 1;
     }
 }
@@ -139,11 +136,7 @@ pub(crate) fn enemy_move_system (
         let player_scale = Vec2::from(player_tf.scale.xy());
         for (mut enemy_tf, mut enemy_attcak_timer, enemy_status, enemy_size) in enemy_query.iter_mut() {
             let enemy_scale = Vec2::from(enemy_tf.scale.xy());
-            let x_direcion = player_tf.translation.x - enemy_tf.translation.x;
-            let y_direcion = player_tf.translation.y - enemy_tf.translation.y;
-
-            let bevel = (x_direcion * x_direcion + y_direcion * y_direcion).sqrt();
-
+            
             let collison = collide(
                 player_tf.translation,
                 player_size.0 * player_scale,
@@ -155,11 +148,13 @@ pub(crate) fn enemy_move_system (
                 if enemy_attcak_timer.0.tick(time.delta()).just_finished() {
                     enemy_hit_player_event.send(EnemyHitPlayerEvent(enemy_status.atk))
                 }                
-
-
             } else {
-                enemy_tf.translation.x +=  x_direcion / bevel * TIME_STEP * BASE_SPEED * 0.3;
-                enemy_tf.translation.y +=  y_direcion / bevel * TIME_STEP * BASE_SPEED * 0.3;
+                let src = enemy_tf.translation.truncate();
+                let dst = player_tf.translation.truncate();
+                let vector = cal_vector_by_two_points(src, dst) * ENEMY_SPEED;
+
+                enemy_tf.translation.x +=  vector.x * TIME_STEP * BASE_SPEED;
+                enemy_tf.translation.y +=  vector.y * TIME_STEP * BASE_SPEED ;
             }
 
         }

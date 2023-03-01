@@ -3,7 +3,9 @@ use bevy::{prelude::*, utils::HashSet, sprite::collide_aabb::collide, math::Vec3
 use crate::{TIME_STEP, BASE_SPEED, Velocity, SpriteSize, BulletImageAssets, 
             background::{X_DIRECTION_LIMIT, Y_DIRECTION_LIMIT},
             events::PlayerHitEnemyEvent,
-            components::{Bullet, Enemy, Player}
+            components::{Bullet, Enemy, Player},
+            camera::SceneCamera,
+            utils::cal_vector_by_two_points
            };
 
 use super::{PLAY_BULLET_SPEED, BULLET_SIZE, BulletSpawnTimer};
@@ -22,28 +24,67 @@ pub(crate) fn exit_main_system(
 }
 
 
+// pub(crate) fn bullet_spawn_system(
+//     mut commands: Commands,
+//     bullet_image_assets: Res<BulletImageAssets>,
+//     query: Query<(&Transform, &Velocity), With<Player>>
+// ) {
+//     if let Ok((player_tf, player_velocity)) = query.get_single(){
+//         let (pos_x, pos_y) = (player_tf.translation.x ,player_tf.translation.y);
+        
+//         let velocity_x = player_velocity.x * PLAY_BULLET_SPEED;
+//         let mut velocity_y = player_velocity.y * PLAY_BULLET_SPEED;
+
+
+//         //TODO静止状态下根据前一次状态确定方向，先无脑向上
+//         if velocity_x == 0.0 && velocity_y == 0.0 {
+//             velocity_y = 2.0;
+//         }
+
+
+//         let mut spawn_bullet = || {
+//             commands.spawn(
+//                 SpriteBundle {
+//                     texture: bullet_image_assets.bullet0.clone_weak(),
+//                     sprite: Sprite {
+//                         custom_size: Some(SpriteSize::from(BULLET_SIZE).0),
+//                         ..Default::default()
+//                     },
+//                     transform: Transform {
+//                         translation: Vec3::new(pos_x, pos_y, 5.0),
+//                         //rotation: Quat::from_rotation_x(30.0),
+//                         ..Default::default()
+//                     },
+//                     ..Default::default()
+//                 })
+//                 .insert(Bullet)
+//                 .insert(Velocity {x: velocity_x, y: velocity_y})
+//                 .insert(SpriteSize::from(BULLET_SIZE));
+//         };
+
+//         spawn_bullet();
+//     } 
+// }
+
 pub(crate) fn bullet_spawn_system(
     mut commands: Commands,
     bullet_image_assets: Res<BulletImageAssets>,
-    query: Query<(&Transform, &Velocity), With<Player>>
+    mouse_pos: Res<WorldMouse>,
+    query: Query<&Transform, With<Player>>
 ) {
-    if let Ok((player_tf, player_velocity)) = query.get_single(){
+    if let Ok(player_tf) = query.get_single(){
         let (pos_x, pos_y) = (player_tf.translation.x ,player_tf.translation.y);
         
-        let velocity_x = player_velocity.x * PLAY_BULLET_SPEED;
-        let mut velocity_y = player_velocity.y * PLAY_BULLET_SPEED;
+        let src = player_tf.translation.truncate();
+        let dst = mouse_pos.0.truncate();
+        let vector = cal_vector_by_two_points(src, dst) * PLAY_BULLET_SPEED;
 
-
-        //TODO静止状态下根据前一次状态确定方向，先无脑向上
-        if velocity_x == 0.0 && velocity_y == 0.0 {
-            velocity_y = 2.0;
-        }
-
+        //println!("{:?}", vector);
 
         let mut spawn_bullet = || {
             commands.spawn(
                 SpriteBundle {
-                    texture: bullet_image_assets.player_bullet0.clone_weak(),
+                    texture: bullet_image_assets.bullet0.clone_weak(),
                     sprite: Sprite {
                         custom_size: Some(SpriteSize::from(BULLET_SIZE).0),
                         ..Default::default()
@@ -56,15 +97,13 @@ pub(crate) fn bullet_spawn_system(
                     ..Default::default()
                 })
                 .insert(Bullet)
-                .insert(Velocity {x: velocity_x, y: velocity_y})
+                .insert(Velocity {x: vector.x, y: vector.y})
                 .insert(SpriteSize::from(BULLET_SIZE));
         };
 
         spawn_bullet();
     } 
 }
-
-
 
 pub(crate) fn bullet_move_system(
     mut commands: Commands,
@@ -117,5 +156,27 @@ pub(crate) fn bullet_move_system(
        
         }
 
+    }
+}
+
+
+#[derive(Default, Resource)]
+pub(crate) struct WorldMouse(pub Vec3);
+
+pub(crate) fn current_world_mouse_system(
+    mut commands: Commands,
+    mut windows: ResMut<Windows>,
+    q_camera: Query<&Transform, With<SceneCamera>>
+) {
+    if let Some(window) = windows.get_primary_mut() {
+        if let Some(pos) = window.cursor_position() {
+            let size = Vec2::new(window.width(), window.height());
+            let p = pos - size / 2.0;
+
+            if let Ok(camera_transform) = q_camera.get_single() {
+                let pos_wld = camera_transform.compute_matrix() * p.extend(0.0).extend(1.0);
+                commands.insert_resource(WorldMouse(Vec3 { x: pos_wld.x, y: pos_wld.y, z: pos_wld.z }));
+            }
+        }
     }
 }

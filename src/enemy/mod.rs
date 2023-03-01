@@ -2,12 +2,13 @@ mod enemy;
 
 use bevy::{prelude::*, time::FixedTimestep, ecs::schedule::ShouldRun};
 
-use crate::GameStage;
+use crate::{GameStage, utils::Val};
 
 use self::enemy::*;
 
 const ENEMY_MAX: u32 = 6;
-pub const ENEMY_SIZE: (f32, f32) = (80.0, 80.0);
+const ENEMY_SPEED: f32 = 0.3;
+pub const ENEMY_SIZE: (f32, f32) = (32.0, 48.0);
 pub const ENEMY_TOMB_SIZE: (f32, f32) = (40.0, 40.0);
 
 #[derive(Component)]
@@ -19,6 +20,7 @@ pub struct EnemyStatus {
     pub def: i64,
     pub cur_hp: i64,
     pub max_hp: i64,
+    pub gold: Val,
 }
 
 impl Default for EnemyStatus {
@@ -28,6 +30,7 @@ impl Default for EnemyStatus {
             def: 1,
             cur_hp: 20,
             max_hp: 20,
+            gold: Val::Float(1, 3)
         }
     }
 }
