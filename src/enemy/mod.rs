@@ -101,6 +101,7 @@ impl Plugin for EnemyPlugin {
             .add_system_set(
                 SystemSet::on_update(GameStage::Main)
                     .with_system(update_enemy_status_system)
+                    .with_system(enemy_move_system)
             )
             .add_system_set(
                 SystemSet::on_exit(GameStage::Main)

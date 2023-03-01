@@ -1,9 +1,10 @@
-use bevy::{prelude::*};
+use bevy::{prelude::*, sprite::collide_aabb::collide, math::Vec3Swizzles};
 use rand::{thread_rng, Rng};
 
-use crate::{EnemyImageAssets, SpriteSize, FontAssets,
-            components::Enemy, 
-            background::{X_DIRECTION_LIMIT, Y_DIRECTION_LIMIT}, 
+use crate::{EnemyImageAssets, SpriteSize, FontAssets, TIME_STEP, BASE_SPEED,
+            components::{Enemy, Player}, 
+            background::{X_DIRECTION_LIMIT, Y_DIRECTION_LIMIT},
+            events::EnemyHitPlayerEvent, 
         };
 
 use super::{EnemyCount, ENEMY_MAX, ENEMY_SIZE, EnemyStatus, EnemyAttackTimer, EnemyHpBar, EnemySpawnTimer};
@@ -127,6 +128,44 @@ pub(crate) fn enemy_spawn_system(
         enemy_count.0 += 1;
     }
 }
+
+pub(crate) fn enemy_move_system (
+    mut enemy_query: Query<(&mut Transform, &mut EnemyAttackTimer, &EnemyStatus, &SpriteSize), With<Enemy>>,
+    player_query: Query<(&Transform, &SpriteSize), (With<Player>, Without<Enemy>)>,
+    mut enemy_hit_player_event: EventWriter<EnemyHitPlayerEvent>,
+    time: Res<Time>
+) {
+    if let Ok((player_tf, player_size)) = player_query.get_single() {
+        let player_scale = Vec2::from(player_tf.scale.xy());
+        for (mut enemy_tf, mut enemy_attcak_timer, enemy_status, enemy_size) in enemy_query.iter_mut() {
+            let enemy_scale = Vec2::from(enemy_tf.scale.xy());
+            let x_direcion = player_tf.translation.x - enemy_tf.translation.x;
+            let y_direcion = player_tf.translation.y - enemy_tf.translation.y;
+
+            let bevel = (x_direcion * x_direcion + y_direcion * y_direcion).sqrt();
+
+            let collison = collide(
+                player_tf.translation,
+                player_size.0 * player_scale,
+                enemy_tf.translation,
+                enemy_size.0 * enemy_scale,
+            );
+
+            if let Some(_) = collison {               
+                if enemy_attcak_timer.0.tick(time.delta()).just_finished() {
+                    enemy_hit_player_event.send(EnemyHitPlayerEvent(enemy_status.atk))
+                }                
+
+
+            } else {
+                enemy_tf.translation.x +=  x_direcion / bevel * TIME_STEP * BASE_SPEED * 0.3;
+                enemy_tf.translation.y +=  y_direcion / bevel * TIME_STEP * BASE_SPEED * 0.3;
+            }
+
+        }
+    }
+}
+
 
 pub(crate) fn update_enemy_status_system(
     mut text_query: Query<(&mut Text, &EnemyHpBar)>,

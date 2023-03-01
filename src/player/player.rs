@@ -1,11 +1,12 @@
 use bevy::{prelude::*};
 
-use crate::{ SpriteSize, PlayerImageAssets,BulletImageAssets,
-            velocity::Velocity,             
-            components::{ Player, Bullet},  
+use crate::{ SpriteSize, PlayerImageAssets, TIME_STEP, BASE_SPEED,          
+            components::{ Player, Velocity},
+            events::PlayerMoveEvent, 
+            background::{X_DIRECTION_LIMIT, Y_DIRECTION_LIMIT},  
             };
 
-use super::{PlayerStatus, PlayerStatusType, PLAYER_SIZE, BULLET_SIZE, PLAY_BULLET_SPEED, PlayerFireTimer};
+use super::{PlayerStatus, PlayerStatusType, PLAYER_SIZE};
 
 
 pub(crate) fn setup(
@@ -30,53 +31,39 @@ pub(crate) fn setup(
     )
     .insert(Player)
     .insert(Velocity::default())
-    .insert(SpriteSize::from(PLAYER_SIZE))
-    .insert(PlayerFireTimer::default());
+    .insert(SpriteSize::from(PLAYER_SIZE));
 }
 
+pub(crate) fn player_move_system(
+    mut query: Query<(&mut Transform, &Velocity, &SpriteSize), With<Player>>,
+    mut player_move_event: EventWriter<PlayerMoveEvent>,
+){
+    for(mut transform, velocity, play_size) in query.iter_mut(){
+        let translation = &mut transform.translation;
+        let play_size = play_size.0 / 2.0;
 
-pub(crate) fn player_fire_system(
-    mut commands: Commands,
-    bullet_image_assets: Res<BulletImageAssets>,
-    query: Query<(&Transform, &Velocity), With<Player>>
-) {
-    if let Ok((player_tf, player_velocity)) = query.get_single(){
-        let (pos_x, pos_y) = (player_tf.translation.x ,player_tf.translation.y);
-        
-        let velocity_x = player_velocity.x * PLAY_BULLET_SPEED;
-        let mut velocity_y = player_velocity.y * PLAY_BULLET_SPEED;
-
-
-        //TODO静止状态下根据前一次状态确定方向，先无脑向上
-        if velocity_x == 0.0 && velocity_y == 0.0 {
-            velocity_y = 2.0;
+        if translation.x + velocity.x * TIME_STEP * BASE_SPEED + play_size.x >= X_DIRECTION_LIMIT {
+            translation.x = X_DIRECTION_LIMIT - play_size.x;
+        } else if translation.x + velocity.x * TIME_STEP * BASE_SPEED - play_size.x < -X_DIRECTION_LIMIT{
+            translation.x = -X_DIRECTION_LIMIT + play_size.x;
+        } else {
+            translation.x += velocity.x * TIME_STEP * BASE_SPEED;
         }
 
 
-        let mut spawn_bullet = || {
-            commands.spawn(
-                SpriteBundle {
-                    texture: bullet_image_assets.player_bullet0.clone_weak(),
-                    sprite: Sprite {
-                        custom_size: Some(SpriteSize::from(BULLET_SIZE).0),
-                        ..Default::default()
-                    },
-                    transform: Transform {
-                        translation: Vec3::new(pos_x, pos_y, 5.0),
-                        //rotation: Quat::from_rotation_x(30.0),
-                        ..Default::default()
-                    },
-                    ..Default::default()
-                })
-                .insert(Bullet)
-                .insert(Velocity {x: velocity_x, y: velocity_y})
-                .insert(SpriteSize::from(BULLET_SIZE));
-        };
+        if translation.y + velocity.y * TIME_STEP * BASE_SPEED + play_size.y > Y_DIRECTION_LIMIT {
+            translation.y = Y_DIRECTION_LIMIT - play_size.y;
+        } else if translation.y + velocity.y * TIME_STEP * BASE_SPEED - play_size.y < -Y_DIRECTION_LIMIT {
+            translation.y = -Y_DIRECTION_LIMIT + play_size.y;
+        } else {
+            translation.y += velocity.y * TIME_STEP * BASE_SPEED;
+        }
 
-        spawn_bullet();
-    } 
+        //for camera to location
+        player_move_event.send(PlayerMoveEvent((translation.x, translation.y)));
+
+    }
 }
-
 
 pub(crate) fn update_player_status_system(
     player_status: Res<PlayerStatus>,

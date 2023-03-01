@@ -1,14 +1,10 @@
 mod player;
 use crate::GameStage;
 
-use bevy::{prelude::*, ecs::schedule::ShouldRun};
+use bevy::prelude::*;
 use self::player::*;
 
-
-
 const PLAYER_SIZE: (f32, f32) = (60.0, 60.0); 
-const BULLET_SIZE:  (f32, f32) = (16.0, 16.0); 
-const PLAY_BULLET_SPEED: f32 = 2.0;
 
 #[derive(PartialEq, Eq)]
 pub enum AliveStatus {
@@ -47,30 +43,6 @@ pub enum PlayerStatusType {
     GOLD,
 }
 
-#[derive(Component)]
-pub(crate) struct PlayerFireTimer(Timer);
-impl Default for PlayerFireTimer {
-    fn default() -> Self {
-        Self(Timer::from_seconds(0.3, TimerMode::Repeating))
-    }
-}
-
-pub(crate) fn player_fire_criteria(
-    mut query: Query<&mut PlayerFireTimer>,
-    time: Res<Time>,
-) -> ShouldRun {
-    for mut player_fire_timer in query.iter_mut(){
-        if player_fire_timer.0.tick(time.delta()).just_finished(){
-            return ShouldRun::Yes;
-        } else {
-            return ShouldRun::No;
-        }
-    }
-    return ShouldRun::No;
-}
-
-
-
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
@@ -83,12 +55,7 @@ impl Plugin for PlayerPlugin {
             SystemSet::on_update(GameStage::Main)
             .with_system(player_keyboard_event_system)
             .with_system(update_player_status_system)
-        )
-        .add_system_set(
-            SystemSet::on_update(GameStage::Main)
-                .with_run_criteria(player_fire_criteria)
-                .with_system(player_fire_system)
-        )        
-        ;
+            .with_system(player_move_system)
+        );
     }
 }
