@@ -16,6 +16,7 @@ pub struct EnemyHitPlayerEvent(pub i64);
 
 pub struct GameOverEvent;
 
+
 pub struct EventsPlugin;
 impl Plugin for EventsPlugin {
     fn build(&self, app: &mut App) {

@@ -43,11 +43,12 @@ impl Default for EnemyCount {
     }
 }
 
+//timer and useflag
 #[derive(Resource)]
-pub(crate) struct EnemySpawnTimer(Timer);
+pub(crate) struct EnemySpawnTimer(Timer, bool);
 impl Default for EnemySpawnTimer {
     fn default() -> Self {
-        Self(Timer::from_seconds(1.0, TimerMode::Repeating))
+        Self(Timer::from_seconds(1.0, TimerMode::Repeating), false)
     }
 }
 
@@ -55,6 +56,12 @@ pub(crate) fn enemy_spawn_criteria(
     mut enemy_spawn_timer: ResMut<EnemySpawnTimer>,
     time: Res<Time>,
 ) -> ShouldRun {
+    //timer is not ready for use
+    if enemy_spawn_timer.1 == false {
+        return ShouldRun::No;
+    }
+    
+    //timer is ready for use
     if enemy_spawn_timer.0.tick(time.delta()).just_finished(){
         return ShouldRun::Yes;
     } else {

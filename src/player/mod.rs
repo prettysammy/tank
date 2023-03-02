@@ -39,7 +39,9 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {       
-        app.add_system_set(
+        app
+        .init_resource::<PlayerStatus>()
+        .add_system_set(
             SystemSet::on_enter(GameStage::Main)
             .with_system(setup)
         )

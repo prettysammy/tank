@@ -1,4 +1,4 @@
-use bevy::{prelude::*, sprite::collide_aabb::collide, math::Vec3Swizzles, render::render_resource::Texture};
+use bevy::{prelude::*, sprite::collide_aabb::collide, math::Vec3Swizzles};
 use rand::{thread_rng, Rng};
 
 use crate::{EnemyImageAssets, SpriteSize, FontAssets, TIME_STEP, BASE_SPEED,
@@ -14,15 +14,17 @@ pub(crate) fn init_main_system(
     mut enemy_spawn_timer: ResMut<EnemySpawnTimer>, 
 ) {
     commands.insert_resource(EnemyCount::default());
-    //commands.insert_resource(EnemySpawnTimer::default());
-    //println!("unpause the enemy spaen timer");
+
+    //enable enemy_spawn_timer
+    enemy_spawn_timer.1 = true;
     enemy_spawn_timer.0.unpause();
 }
 
 pub(crate) fn exit_main_system(
     mut enemy_spawn_timer: ResMut<EnemySpawnTimer>, 
 ) {
-    //println!("pause the enemy spaen timer");
+    //disable enemy_spawn_timer
+    enemy_spawn_timer.1 = false;
     enemy_spawn_timer.0.pause();
 }
 
@@ -191,6 +193,6 @@ pub(crate) fn update_enemy_texture_atlas_system(
     mut query: Query<&mut TextureAtlasSprite, With<Enemy>>    
 ) {
     for mut sprite in query.iter_mut() { 
-        sprite.index ^= 1;
+        sprite.index =  (sprite.index +1) % 3;
     }   
 }

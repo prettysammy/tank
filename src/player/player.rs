@@ -13,7 +13,8 @@ pub(crate) fn setup(
     mut commands: Commands,
     player_image_assets: Res<PlayerImageAssets>
 ) {
-    commands.insert_resource(PlayerStatus::default());
+    //game over时刷新
+    //commands.insert_resource(PlayerStatus::default());
 
     commands.spawn(
         SpriteBundle{

@@ -2,8 +2,9 @@ use bevy::prelude::*;
 use bevy_ninepatch::{NinePatchBuilder, NinePatchBundle, NinePatchData};
 
 use crate::{assets::UIImageAssets,  
-            player::PlayerStatusType, 
+            player::{PlayerStatusType, PlayerStatus}, 
             GameStage,
+            game_stage::{SingleLevelTimer, GameLevel},
            };
 
 
@@ -11,15 +12,21 @@ pub struct StatusUilPlguin;
 
 impl Plugin for StatusUilPlguin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(
+        app
+        .add_system_set(
             SystemSet::on_enter(GameStage::Main)
             .with_system(setup)
+        )
+        .add_system_set(
+            SystemSet::on_update(GameStage::Main)
+            .with_system(update_count_down_time)
         );    
     }
 }
 
 fn setup(
     mut commands: Commands,
+    player_status: Res<PlayerStatus>,
     asset_server: Res<AssetServer>,
     ui_image_assets: Res<UIImageAssets>,
     mut nine_patches: ResMut<Assets<NinePatchBuilder<()>>>,    
@@ -76,7 +83,7 @@ fn setup(
                                         color: Color::RED.into(),
                                         ..default()
                                     },
-                                    value: "100/100".to_string(),
+                                    value: format!("{}/{}", player_status.cur_hp, player_status.max_hp),
                                 }],
                                 ..default()
                             },
@@ -123,7 +130,7 @@ fn setup(
                                         color: Color::BLUE.into(),
                                         ..default()
                                     },
-                                    value: "10".to_string(),
+                                    value: format!("{}", player_status.atk),
                                 }],
                                 ..default()
                             },
@@ -170,7 +177,7 @@ fn setup(
                                         color: Color::BLUE.into(),
                                         ..default()
                                     },
-                                    value: "10".to_string(),
+                                    value: format!("{}", player_status.def),
                                 }],
                                 ..default()
                             },
@@ -218,7 +225,7 @@ fn setup(
                                         color: Color::GOLD.into(),
                                         ..default()
                                     },
-                                    value: "10000".to_string(),
+                                    value: format!("{}", player_status.gold),
                                 }],
                                 ..default()
                             },
@@ -228,11 +235,46 @@ fn setup(
                 });                          
         })
 
+        //timer
+        .with_children(|parent| {
+            parent
+                .spawn(NodeBundle {
+                    background_color: Color::NONE.into(),
+                    style: Style { ..default() },
+                    ..default()
+                })
+                .with_children(|parent| {
+                    parent
+                        .spawn(TextBundle {
+                            style: Style {
+                                size: Size::new(Val::Auto, Val::Px(32.0)),
+                                min_size: Size::new(Val::Px(80.0), Val::Px(32.0)),
+                                ..default()
+                            },
+                            text: Text {
+                                sections: vec![TextSection {
+                                    style: TextStyle {
+                                        font: asset_server.load("fonts/hanti.ttf"),
+                                        font_size: 16.0,
+                                        color: Color::BLACK.into(),
+                                        ..default()
+                                    },
+                                    value: format!("left 100s"),
+                                }],
+                                ..default()
+                            },
+                            ..default()
+                        })
+                        .insert(CountDownTimeMark);
+                });                          
+        })       
+
+
         .id();
 
         commands.spawn(NinePatchBundle {
             style: Style {
-                size: Size::new(Val::Px(180.0), Val::Px(160.0)),
+                size: Size::new(Val::Px(180.0), Val::Px(180.0)),
                 position_type: PositionType::Absolute,
                 position: UiRect {
                     left: Val::Px(5.0),
@@ -249,4 +291,21 @@ fn setup(
             ..Default::default()
         }); 
        
+}
+
+
+#[derive(Component)]
+struct CountDownTimeMark;
+
+fn update_count_down_time(
+    single_level_live_timer: Res<SingleLevelTimer>,
+    game_level: Res<GameLevel>,
+    mut query: Query<&mut Text, With<CountDownTimeMark>>   
+) {
+    for mut text in query.iter_mut() {
+        text.sections[0].value = format!("Level {}\r\nTime left {:.0}s",
+                                        game_level.level, single_level_live_timer.0.remaining_secs()
+                                        //(single_level_live_timer.0.remaining_secs() as u32) + 1
+                                        );
+    }
 }

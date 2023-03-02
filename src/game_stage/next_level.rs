@@ -1,28 +1,27 @@
 use bevy::prelude::*;
 
-use crate::{camera::SceneCamera, 
-            events::GameOverEvent,
-            player::PlayerStatus
+
+use crate::{camera::SceneCamera
            };
 
 use super::*;
 
 
-
-pub struct GameOverPlugin;
-impl Plugin for GameOverPlugin {
+pub struct NextLevelPlugin;
+impl Plugin for NextLevelPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(
-            SystemSet::on_enter(GameStage::GameOver)
+        app
+        .add_system_set(
+            SystemSet::on_update(GameStage::Main)
+            .with_system(count_down_to_next_level)
+        )
+        .add_system_set(
+            SystemSet::on_enter(GameStage::NextLevel)
             .with_system(cleanup)
         )
         .add_system_set(
-            SystemSet::on_update(GameStage::GameOver)
-            .with_system(replay_game)
-        )
-        .add_system_set(
-            SystemSet::on_update(GameStage::Main)
-            .with_system(to_game_over)
+            SystemSet::on_update(GameStage::NextLevel)
+            .with_system(next_level)
         );        
     }    
 }
@@ -31,14 +30,12 @@ impl Plugin for GameOverPlugin {
 fn cleanup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    game_level: Res<GameLevel>,
     query: Query<Entity>
 ) {
     for entity in query.iter() {
         commands.entity(entity).despawn();
     } 
-
-    commands.insert_resource(PlayerStatus::default());
-    commands.insert_resource(SingleLevelTimer::default());
 
     //game over scene
     commands
@@ -87,7 +84,7 @@ fn cleanup(
                     text: Text {
                         sections: vec![
                             TextSection {
-                                value: "Play Again".to_string(),
+                                value: "GO".to_string(),
                                 style: button_style.clone(),
                                 ..Default::default()
                             }
@@ -107,7 +104,7 @@ fn cleanup(
                 },
                 text: Text {
                     sections: vec![TextSection {
-                        value: "Game Over".to_string(),
+                        value: format!("Next Level {}", game_level.level),
                         style: text_style.clone(),
                         ..Default::default()
                     }],
@@ -124,7 +121,7 @@ fn cleanup(
 
 }
 
-fn replay_game(
+fn next_level(
     mut commands: Commands,
     mut game_stage: ResMut<State<GameStage>>,
     mut single_level_live_timer: ResMut<SingleLevelTimer>,
@@ -137,13 +134,9 @@ fn replay_game(
                 for entity in query.iter() {
                     commands.entity(entity).despawn();
                 }
-
-                //reset game level
-                commands.insert_resource(GameLevel::default());
-                //enable the timer and reset it
-                single_level_live_timer.1 = true;
-                single_level_live_timer.0.reset();
-
+                
+                //go to main ,resume the timer
+                single_level_live_timer.0.unpause();               
                 game_stage.set(GameStage::Main).unwrap();
             },
             _=> (),
@@ -151,12 +144,24 @@ fn replay_game(
     }
 }
 
-fn to_game_over(
-    mut game_over_event: EventReader<GameOverEvent>,
+pub(crate) fn count_down_to_next_level(
+    mut single_level_live_timer: ResMut<SingleLevelTimer>,
+    mut game_level: ResMut<GameLevel>,
+    time: Res<Time>,
     mut game_stage: ResMut<State<GameStage>>
 ) {
-    for _ in game_over_event.iter() {
-        println!("enter game over");        
-        game_stage.set(GameStage::GameOver).unwrap();
+    //println!("{}",single_level_live_timer.0.remaining_secs());
+    
+    //
+    if single_level_live_timer.1 {
+        if single_level_live_timer.0.tick(time.delta()).just_finished() {
+
+            //Next level page should pasue the timer
+            single_level_live_timer.0.pause();
+    
+            game_level.level += 1;
+            game_stage.set(GameStage::NextLevel).unwrap();
+        }
     }
+
 }
