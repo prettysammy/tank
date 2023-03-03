@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, ui::FocusPolicy};
 
 use crate::{camera::SceneCamera};
 
@@ -29,16 +29,11 @@ impl Plugin for GameStartPlugin {
 fn start_page_setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    ui_image_assets: Res<UIImageAssets>,
 ) {
     commands
         .spawn(Camera2dBundle::default())
         .insert(SceneCamera);    
-
-    let button_style = TextStyle {
-        font: asset_server.load("fonts/hanti.ttf"),
-        font_size: 60.0,
-        color: Color::RED,
-    };  
 
     commands
         .spawn(NodeBundle {
@@ -53,47 +48,83 @@ fn start_page_setup(
             background_color: Color::NONE.into(),
             ..Default::default()
         })
+
+        //background picture
         .with_children(|parent| {
-            parent.spawn(ButtonBundle {
+            parent.spawn(ImageBundle {
                 style: Style {
-                    padding: UiRect::all(Val::Px(20.0)),
-                    ..Default::default()
+                    size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                    margin: UiRect {
+                        ..default()
+                    },
+                    ..default()
                 },
-                background_color: Color::GREEN.into(),
-                ..Default::default()
+                image: UiImage(ui_image_assets.start_page.clone_weak()),
+                ..default()
             })
+            
+            //Title
+            .with_children(|parent| { 
+                parent.spawn(ImageBundle {
+                    style : Style { 
+                        position_type: PositionType::Absolute,
+                        position: UiRect { 
+                                        left: Val::Percent(20.0),
+                                        right: Val::Percent(20.0),
+                                        top: Val::Percent(15.0),
+                                        bottom:Val::Percent(50.0),
+                                         },                                                              
+                        ..Default::default()
+                    }, 
+                    image: UiImage(ui_image_assets.title.clone_weak()),                 
+                    ..Default::default()
+                });                       
+            })
+
+            //button
             .with_children(|parent| {
-                parent.spawn(TextBundle {
-                    style : Style {
+                parent.spawn(ButtonBundle {
+                    image: UiImage::from(ui_image_assets.button0.clone_weak()),
+                    style: Style {
+                        position_type: PositionType::Absolute,
+                        position: UiRect { 
+                                        left: Val::Percent(35.0),
+                                        right: Val::Percent(35.0),
+                                        top: Val::Percent(60.0),
+                                        bottom:Val::Percent(30.0),
+                                         },
+                        padding: UiRect::all(Val::Px(10.0)),
+                        justify_content: JustifyContent::Center,
                         ..Default::default()
                     },
-                    text: Text {
-                        sections: vec![
-                            TextSection {
-                                value: "START GAME".to_string(),
-                                style: button_style.clone(),
-                                ..Default::default()
-                            }
-                        ],
-                        alignment: TextAlignment {
-                            vertical: VerticalAlign::Center,
-                            horizontal: HorizontalAlign::Center,                            
-                        },
-                        ..Default::default()
-                    },                    
                     ..Default::default()
-                });
-            })
-            .insert(StartPage);
+                })
+                .insert(StartPage)
+                
+                .with_children(|parent| {
+                    parent.spawn(ImageBundle {
+                        focus_policy: FocusPolicy::Pass,
+                        style: Style {
+                            margin: UiRect {
+                                ..default()
+                            },
+                            ..default()
+                        },
+                        image: UiImage(ui_image_assets.text_play.clone_weak()),
+                        ..default()
+                    });
+                })
+                .insert(StartPage);                    
+            });
         });    
-
+          
 }
 
 fn prepare_page_setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     query: Query<Entity>,
-    mut interaction_query: Query<&Interaction, (With<Interaction>, With<Button>, With<StartPage>)>
+    mut interaction_query: Query<&Interaction, (With<Interaction>, With<StartPage>)>
 ) {
     for interaction in interaction_query.iter_mut() {
         match interaction {

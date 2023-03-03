@@ -66,7 +66,7 @@ impl Plugin for GamePlugin {
         .add_plugins(DefaultPlugins
             .set(WindowPlugin{
                 window: WindowDescriptor {
-                    title: "Tank".to_string(),
+                    title: "Tank  VS  Zombie".to_string(),
                     width: 1280.,
                     height: 800.,
                     ..Default::default()

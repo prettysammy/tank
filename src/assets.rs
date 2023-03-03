@@ -47,6 +47,16 @@ pub struct UIImageAssets {
     #[asset(path = "textures/ui/status_ui.png")]
     pub main_panel: Handle<Image>,
 
+    #[asset(path = "textures/ui/title.png")]
+    pub title: Handle<Image>,
+    #[asset(path = "textures/ui/Button0.png")]
+    pub button0: Handle<Image>,
+    #[asset(path = "textures/ui/TxtPlay.png")]
+    pub text_play: Handle<Image>,
+
+    #[asset(path = "textures/ui/start_page.png")]
+    pub start_page: Handle<Image>,
+
     #[asset(path = "textures/ui/hp.png")]
     pub icon_hp: Handle<Image>,
 
