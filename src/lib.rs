@@ -29,7 +29,7 @@ mod utils;
 
 
 mod components;
-pub use components::{ SpriteSize, Velocity };
+pub use components::{ SpriteSize, Velocity};
 
 mod game_stage;
 pub use game_stage::{GameStage, GameStagePlugin};

@@ -1,0 +1,31 @@
+([
+  (
+    name: "tank0",
+    role: TANK0,
+    max_hp: 100,
+    atk: 10,
+    def: 2,
+  ),
+  (
+    name: "tank1",
+    role: TANK1,
+    max_hp: 60,
+    atk: 15,
+    def: 0,
+  ),
+  (
+    name: "tank2",
+    role: TANK2,
+    max_hp: 150,
+    atk: 6,
+    def: 4,
+  ),
+  (
+    name: "tank3",
+    role: TANK3,
+    max_hp: 100,
+    atk: 10,
+    def: 2,
+  ),
+])
+

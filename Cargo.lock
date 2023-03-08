@@ -3081,6 +3081,8 @@ dependencies = [
  "bevy_ninepatch",
  "colored",
  "rand",
+ "ron",
+ "serde",
 ]
 
 [[package]]

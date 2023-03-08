@@ -12,8 +12,8 @@ pub struct FontAssets {
 
 #[derive(AssetCollection, Resource)]
 pub struct PlayerImageAssets {
-    #[asset(path = "textures/tank0.png")]
-    pub player0: Handle<Image>
+    #[asset(path = "textures/tanks", collection(typed))]
+    pub tanks: Vec<Handle<Image>>
 }
 
 #[derive(AssetCollection, Resource)]
@@ -56,6 +56,9 @@ pub struct UIImageAssets {
 
     #[asset(path = "textures/ui/start_page.png")]
     pub start_page: Handle<Image>,
+    #[asset(path = "textures/ui/prepare_page.png")]
+    pub prepare_page: Handle<Image>,
+
 
     #[asset(path = "textures/ui/hp.png")]
     pub icon_hp: Handle<Image>,
@@ -67,5 +70,8 @@ pub struct UIImageAssets {
     pub icon_def: Handle<Image>,  
 
     #[asset(path = "textures/ui/gold.png")]
-    pub icon_gold: Handle<Image>,        
+    pub icon_gold: Handle<Image>, 
+
+    #[asset(path = "textures/ui/choose_frame.png")]
+    pub choose_frame: Handle<Image>,            
 }

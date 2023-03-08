@@ -6,19 +6,36 @@ use crate::{ SpriteSize, PlayerImageAssets, TIME_STEP, BASE_SPEED,
             background::{X_DIRECTION_LIMIT, Y_DIRECTION_LIMIT},  
             };
 
-use super::{PlayerStatus, PlayerStatusType, PLAYER_SIZE};
+use super::{PlayerStatus, PlayerStatusType, PLAYER_SIZE, PlayerInfo};
 
 
 pub(crate) fn setup(
     mut commands: Commands,
+    player_info: Res<PlayerInfo>,
+    mut player_status: ResMut<PlayerStatus>,
     player_image_assets: Res<PlayerImageAssets>
 ) {
     //game over时刷新
     //commands.insert_resource(PlayerStatus::default());
 
+    if player_status.is_init {
+        player_status.atk = player_info.atk;
+        player_status.def = player_info.def;
+        player_status.cur_hp = player_info.max_hp;
+        player_status.max_hp = player_info.max_hp;
+        player_status.is_init = false;
+    }
+
+
+    let index:usize = match  player_info.role {
+        super::PlayerRole::TANK0 => 0,
+        super::PlayerRole::TANK1 => 1,
+        super::PlayerRole::TANK2 => 2,
+        super::PlayerRole::TANK3 => 3,
+    };
     commands.spawn(
         SpriteBundle{
-            texture: player_image_assets.player0.clone(),
+            texture: player_image_assets.tanks.get(index).unwrap().clone(),
             transform: Transform {
                 translation: Vec3::new(0.0, 0.0, 10.0), 
                 ..Default::default()

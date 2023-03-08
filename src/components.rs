@@ -21,8 +21,15 @@ impl Default for Velocity {
     }
 }
 
-
-
+// #[derive(Component)]
+// pub struct Visibility{
+//     pub is_visible: bool,
+// }
+// impl Default for Visibility {
+//     fn default() -> Self {
+//         Self { is_visible: false }
+//     }
+// }
 
 #[derive(Component)]
 pub struct SpriteSize(pub Vec2);
