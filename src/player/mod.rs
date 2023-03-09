@@ -37,6 +37,7 @@ pub struct PlayerStatus {
     pub cur_hp: i64,
     pub max_hp: i64,
     pub gold: i64,
+    pub level: usize,
     pub is_init: bool,
 }
 
@@ -48,6 +49,7 @@ impl Default for PlayerStatus {
             cur_hp: 100,
             max_hp: 100,
             gold: 10,
+            level: 1,
             is_init: true,
         }
     }

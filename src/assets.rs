@@ -38,8 +38,12 @@ pub struct EnemyImageAssets {
     pub tomb: Handle<Image>,  
 
     #[asset(texture_atlas(tile_size_x = 32.0, tile_size_y = 48.0, columns = 3, rows = 1))]
-    #[asset(path = "textures/zombie.png")]
-    pub zombie: Handle<TextureAtlas>,        
+    #[asset(path = "textures/enemy/zombie.png")]
+    pub zombie: Handle<TextureAtlas>, 
+
+    #[asset(texture_atlas(tile_size_x = 32.0, tile_size_y = 48.0, columns = 3, rows = 1))]
+    #[asset(path = "textures/enemy/skeleton.png")]
+    pub skeleton: Handle<TextureAtlas>,           
 }
 
 #[derive(AssetCollection, Resource)]

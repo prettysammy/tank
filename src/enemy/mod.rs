@@ -1,8 +1,9 @@
 mod enemy;
 
 use bevy::{prelude::*, time::FixedTimestep, ecs::schedule::ShouldRun};
+use serde::{Deserialize, Serialize};
 
-use crate::{GameStage, utils::Val};
+use crate::{GameStage, utils::{Val, Pool}};
 
 use self::enemy::*;
 
@@ -13,6 +14,28 @@ pub const ENEMY_TOMB_SIZE: (f32, f32) = (40.0, 40.0);
 
 #[derive(Component)]
 pub struct EnemyHpBar(pub Entity);
+
+#[derive(Resource, Deserialize, Serialize)]
+pub struct EnemyInfo {
+    pub name: String,
+    pub max_hp: i64,
+    pub atk: i64,
+    pub def: i64,
+    pub gold: Val,
+}
+impl Default for EnemyInfo {
+    fn default() -> Self {
+        Self { 
+            name: "zombie".to_string(),
+            max_hp: 20,
+            atk: 5,
+            def: 1,
+            gold: Val::Float(1, 3)
+        }
+    }
+}
+
+
 
 #[derive(Component)]
 pub struct EnemyStatus {
@@ -31,6 +54,18 @@ impl Default for EnemyStatus {
             cur_hp: 20,
             max_hp: 20,
             gold: Val::Float(1, 3)
+        }
+    }
+}
+
+impl From<&EnemyInfo> for EnemyStatus {
+    fn from(enemy_info: &EnemyInfo) -> Self {
+        EnemyStatus {
+            atk: enemy_info.atk,
+            def: enemy_info.def,
+            cur_hp: enemy_info.max_hp,
+            max_hp: enemy_info.max_hp,
+            gold: enemy_info.gold,            
         }
     }
 }
@@ -118,4 +153,10 @@ impl Plugin for EnemyPlugin {
                 .with_system(exit_main_system)
             );
     }
+}
+
+
+pub fn get_enemy_pool() -> Pool<EnemyInfo> {
+    let config = include_str!("../../assets/pool/enemy.ron");
+    ron::from_str(config).unwrap()
 }

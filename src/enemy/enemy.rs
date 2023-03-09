@@ -1,13 +1,14 @@
 use bevy::{prelude::*, sprite::collide_aabb::collide, math::Vec3Swizzles};
 use rand::{thread_rng, Rng};
 
+
 use crate::{EnemyImageAssets, SpriteSize, FontAssets, TIME_STEP, BASE_SPEED,
             components::{Enemy, Player}, 
             background::{X_DIRECTION_LIMIT, Y_DIRECTION_LIMIT},
             events::EnemyHitPlayerEvent, utils::cal_vector_by_two_points, 
         };
 
-use super::{EnemyCount, ENEMY_MAX, ENEMY_SIZE, EnemyStatus, EnemyAttackTimer, EnemyHpBar, EnemySpawnTimer, ENEMY_SPEED};
+use super::{EnemyCount, ENEMY_MAX, ENEMY_SIZE, EnemyStatus, EnemyAttackTimer, EnemyHpBar, EnemySpawnTimer, ENEMY_SPEED, EnemyInfo, get_enemy_pool};
 
 pub(crate) fn init_main_system(
     mut commands: Commands,
@@ -41,90 +42,88 @@ pub(crate) fn enemy_spawn_system(
             font_size: 16.0,
             color: Color::BLACK,
         };
-
         let mut rng = thread_rng();
-        let x = rng.gen_range( -(X_DIRECTION_LIMIT - ENEMY_SIZE.0 / 2.0)..(X_DIRECTION_LIMIT - ENEMY_SIZE.0 / 2.0) );
-        let y = rng.gen_range( -(Y_DIRECTION_LIMIT - ENEMY_SIZE.1 / 2.0)..(Y_DIRECTION_LIMIT - ENEMY_SIZE.1 / 2.0));
 
-        let mut entity_command = 
-        // commands.spawn(
-        //     SpriteBundle {
-        //         texture: enemy_image_assets.enemy0.clone_weak(),
-        //         transform: Transform{
-        //             translation:Vec3::new(x, y, 10.0),
-        //             ..Default::default()
-        //         },
-        //         sprite: Sprite {
-        //             custom_size: Some(SpriteSize::from(ENEMY_SIZE).0),
-        //             ..Default::default()
-        //         },                
-        //         ..Default::default()
-        //     }       
-        // );
-
-        commands.spawn(
-            SpriteSheetBundle {
-                texture_atlas: enemy_image_assets.zombie.clone_weak(),
-                transform: Transform{
-                    translation:Vec3::new(x, y, 10.0),
-                    ..Default::default()
-                },
-                sprite: TextureAtlasSprite {
-                    custom_size: Some(SpriteSize::from(ENEMY_SIZE).0),
-                    ..Default::default()
-                },                
-                ..Default::default()
-            }       
-        );
-                
-        entity_command
-        .insert(Enemy)
-        .insert(SpriteSize::from(ENEMY_SIZE))
-        .insert(EnemyStatus::default())
-        .insert(EnemyAttackTimer::default());
-        
-        let entity = entity_command.id();
-
-        entity_command
-            .with_children(|parent| {
-                parent.spawn(SpriteBundle {
+        let mut gen_enemy = || {           
+            let x = rng.gen_range( -(X_DIRECTION_LIMIT - ENEMY_SIZE.0 / 2.0)..(X_DIRECTION_LIMIT - ENEMY_SIZE.0 / 2.0) );
+            let y = rng.gen_range( -(Y_DIRECTION_LIMIT - ENEMY_SIZE.1 / 2.0)..(Y_DIRECTION_LIMIT - ENEMY_SIZE.1 / 2.0));
+    
+            let enemy_pool =  get_enemy_pool().0;
+            let enemy_info: &EnemyInfo = enemy_pool.get(rng.gen_range(0..2)).unwrap();
+            let enemy_atlas = match &enemy_info.name as &str{
+                "zombie" => enemy_image_assets.zombie.clone_weak(),
+                "skeleton" => enemy_image_assets.skeleton.clone_weak(),
+                _ => enemy_image_assets.zombie.clone_weak(),
+            };
+            let enemy_status = EnemyStatus::from(enemy_info);            
+            
+            let mut entity_command = 
+            commands.spawn(
+                SpriteSheetBundle {
+                    texture_atlas: enemy_atlas,
                     transform: Transform{
-                        translation:Vec3::new(0.0,40.0, 9.0),
+                        translation:Vec3::new(x, y, 10.0),
                         ..Default::default()
                     },
-                    sprite: Sprite {
-                        custom_size: Some(Vec2::new(60.0, 20.0)),
-                        color: Color::RED,
+                    sprite: TextureAtlasSprite {
+                        custom_size: Some(SpriteSize::from(ENEMY_SIZE).0),
                         ..Default::default()
-                    },
+                    },                
                     ..Default::default()
-                })
-                .insert(EnemyHpBar(entity));
-            })
-            .with_children(|parent| {
-                parent.spawn(Text2dBundle {
-                    transform: Transform{
-                        translation:Vec3::new(0.0,40.0, 10.0),
-                        ..Default::default()
-                    },
-                    text: Text {
-                        sections: vec![TextSection {
-                            value: "HP".to_string(),
-                            style: hp_style.clone(),
+                }       
+            );
+                    
+            entity_command
+            .insert(Enemy)
+            .insert(SpriteSize::from(ENEMY_SIZE))
+            .insert(enemy_status)
+            .insert(EnemyAttackTimer::default());
+            
+            let entity = entity_command.id();
+    
+            entity_command
+                .with_children(|parent| {
+                    parent.spawn(SpriteBundle {
+                        transform: Transform{
+                            translation:Vec3::new(0.0,40.0, 9.0),
                             ..Default::default()
-                        }],
-                        alignment: TextAlignment {
-                            vertical: VerticalAlign::Center,
-                            horizontal: HorizontalAlign::Center,
+                        },
+                        sprite: Sprite {
+                            custom_size: Some(Vec2::new(60.0, 20.0)),
+                            color: Color::RED,
+                            ..Default::default()
                         },
                         ..Default::default()
-                    },
-                    ..Default::default()
+                    })
+                    .insert(EnemyHpBar(entity));
                 })
-                .insert(EnemyHpBar(entity));
-            }); 
-  
-        enemy_count.0 += 1;
+                .with_children(|parent| {
+                    parent.spawn(Text2dBundle {
+                        transform: Transform{
+                            translation:Vec3::new(0.0,40.0, 10.0),
+                            ..Default::default()
+                        },
+                        text: Text {
+                            sections: vec![TextSection {
+                                value: "HP".to_string(),
+                                style: hp_style.clone(),
+                                ..Default::default()
+                            }],
+                            alignment: TextAlignment {
+                                vertical: VerticalAlign::Center,
+                                horizontal: HorizontalAlign::Center,
+                            },
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    })
+                    .insert(EnemyHpBar(entity));
+                }); 
+      
+            enemy_count.0 += 1;
+        };
+
+        gen_enemy();
     }
 }
 
