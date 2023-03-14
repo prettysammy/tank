@@ -178,32 +178,43 @@ fn prepare_page_setup(
                         ..default()
                     })
 
-
+                    //text info
                     .with_children(|parent| {
-                        parent.spawn(TextBundle {
-                            style : Style { 
+                        parent.spawn(NodeBundle {
+                            style: Style {
+                                justify_content: JustifyContent::Center,
+                                align_content: AlignContent::Center,
+                                align_items: AlignItems::Center,
+                                flex_direction: FlexDirection::Column,
                                 position_type: PositionType::Absolute,
                                 position: UiRect { 
-                                                left: Val::Percent(35.0),
-                                                right: Val::Percent(35.0),
+                                                left: Val::Percent(0.0),
+                                                right: Val::Percent(0.0),
                                                 top: Val::Percent(0.0),
                                                 bottom:Val::Percent(90.0),
-                                                 },                                                              
-                                ..Default::default()
-                            }, 
-                            text: Text {
-                                sections: vec![TextSection {
-                                    value: format!("choose your tank"),
-                                    style: text_style.clone(),
-                                    ..Default::default()
-                                }],
-                                alignment: TextAlignment {
-                                    vertical: VerticalAlign::Center,
-                                    horizontal: HorizontalAlign::Center,
-                                },
+                                                },
+
                                 ..Default::default()
                             },
+                            background_color: Color::NONE.into(),
                             ..Default::default()
+                        })
+                        .with_children(|parent| {
+                            parent.spawn(TextBundle {
+                                text: Text {
+                                    sections: vec![TextSection {
+                                        value: format!("choose your tank"),
+                                        style: text_style.clone(),
+                                        ..Default::default()
+                                    }],
+                                    alignment: TextAlignment {
+                                        vertical: VerticalAlign::Center,
+                                        horizontal: HorizontalAlign::Center,
+                                    },
+                                    ..Default::default()
+                                },
+                                ..Default::default()
+                            });
                         });
                     })
 

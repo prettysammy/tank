@@ -23,6 +23,9 @@ use background::BackgroundPlugin;
 mod ui;
 use ui::UiPlugin;
 
+mod skills;
+use skills::SkillsPlugin;
+
 
 //pub functions
 mod utils;
@@ -83,7 +86,8 @@ impl Plugin for GamePlugin {
         .add_plugin(BulletPlugin)
         .add_plugin(EventsPlugin)
         .add_plugin(RenderPlugin)
-        .add_plugin(UiPlugin);
+        .add_plugin(UiPlugin)
+        .add_plugin(SkillsPlugin);
     }
 }
 

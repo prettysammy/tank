@@ -1,0 +1,26 @@
+([
+  (
+    attribute: ATK,
+    describe: "enhance atk + 2",
+    image_label: "textures/skills/atk_icon.png",
+    level: 1,
+    cost: 5,
+    value_change:Some(IncreaseInteger(2)),
+  ),
+  (
+    attribute: DEF,
+    describe: "enhance def + 2",
+    image_label: "textures/skills/def_icon.png",
+    level: 1,
+    cost: 5,
+    value_change:Some(IncreaseInteger(2)),
+  ),
+  (
+    attribute: HP,
+    describe: "enhance hp + 20",
+    image_label: "textures/skills/hp_icon.png",
+    level: 1,
+    cost: 5,
+    value_change:Some(IncreaseInteger(20)),
+  ),   
+])

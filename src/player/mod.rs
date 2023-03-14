@@ -63,7 +63,7 @@ pub enum PlayerRole {
     TANK3,
 }
 
-#[derive(Component)]
+#[derive(Debug, Component, Clone, Copy,Deserialize, Serialize)]
 pub enum PlayerStatusType {
     ATK,
     DEF,

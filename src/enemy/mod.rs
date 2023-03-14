@@ -3,7 +3,10 @@ mod enemy;
 use bevy::{prelude::*, time::FixedTimestep, ecs::schedule::ShouldRun};
 use serde::{Deserialize, Serialize};
 
-use crate::{GameStage, utils::{Val, Pool}};
+use crate::{
+            GameStage, utils::{Val, Pool},
+            game_stage::GameLevel
+           };
 
 use self::enemy::*;
 
@@ -67,6 +70,15 @@ impl From<&EnemyInfo> for EnemyStatus {
             max_hp: enemy_info.max_hp,
             gold: enemy_info.gold,            
         }
+    }
+}
+
+impl EnemyStatus {
+    fn correct_enemy_status_from_game_level(&mut self, game_level: GameLevel) {
+        self.atk = (self.atk as f32 * game_level.enemy_atk_enhance) as i64;
+        self.def = (self.def as f32 * game_level.enemy_def_enhance) as i64;
+        self.cur_hp = (self.cur_hp as f32 * game_level.enemy_hp_enhance) as i64;
+        self.max_hp = (self.max_hp as f32 * game_level.enemy_hp_enhance) as i64;
     }
 }
 

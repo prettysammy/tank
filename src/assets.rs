@@ -29,6 +29,19 @@ pub struct BulletImageAssets {
 }
 
 #[derive(AssetCollection, Resource)]
+pub struct SkillsImageAssets {
+    #[asset(path = "textures/skills/atk_icon.png")]
+    pub atk_icon: Handle<Image>,
+
+    #[asset(path = "textures/skills/def_icon.png")]
+    pub def_icon: Handle<Image>,
+
+    #[asset(path = "textures/skills/hp_icon.png")]
+    pub hp_icon: Handle<Image>,
+}
+
+
+#[derive(AssetCollection, Resource)]
 pub struct EnemyImageAssets {
     // #[asset(texture_atlas(tile_size_x = 155.0, tile_size_y = 175.0, columns = 2, rows = 1))]
     // #[asset(path = "textures/kun-altes.png")]

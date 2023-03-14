@@ -5,7 +5,8 @@ use rand::{thread_rng, Rng};
 use crate::{EnemyImageAssets, SpriteSize, FontAssets, TIME_STEP, BASE_SPEED,
             components::{Enemy, Player}, 
             background::{X_DIRECTION_LIMIT, Y_DIRECTION_LIMIT},
-            events::EnemyHitPlayerEvent, utils::cal_vector_by_two_points, 
+            events::EnemyHitPlayerEvent, utils::cal_vector_by_two_points,
+            game_stage::GameLevel, 
         };
 
 use super::{EnemyCount, ENEMY_MAX, ENEMY_SIZE, EnemyStatus, EnemyAttackTimer, EnemyHpBar, EnemySpawnTimer, ENEMY_SPEED, EnemyInfo, get_enemy_pool};
@@ -34,9 +35,10 @@ pub(crate) fn enemy_spawn_system(
     enemy_image_assets: Res<EnemyImageAssets>,
     font_assets: Res<FontAssets>,
     mut enemy_count: ResMut<EnemyCount>,
+    game_level: ResMut<GameLevel>,
 ) {
-    //println!("enemy_spawn_system");
-    if enemy_count.0 < ENEMY_MAX {  
+    let max_enemy_number: u32 = (ENEMY_MAX as f32 * game_level.enemy_number_enhance) as u32;
+    if enemy_count.0 < max_enemy_number {  
         let hp_style = TextStyle {
             font: font_assets.bold.clone_weak(),
             font_size: 16.0,
@@ -55,7 +57,8 @@ pub(crate) fn enemy_spawn_system(
                 "skeleton" => enemy_image_assets.skeleton.clone_weak(),
                 _ => enemy_image_assets.zombie.clone_weak(),
             };
-            let enemy_status = EnemyStatus::from(enemy_info);            
+            let mut enemy_status = EnemyStatus::from(enemy_info);
+            enemy_status.correct_enemy_status_from_game_level(*game_level.as_ref());            
             
             let mut entity_command = 
             commands.spawn(
